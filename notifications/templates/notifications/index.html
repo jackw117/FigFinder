@@ -2,16 +2,24 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hello there</title>
+    <title>Updates</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'notifications/style.css' %}">
+
   </head>
   <body>
-    {% if test %}
-      <h1>{{test}}</h1>
-    {% endif %}
-    <form action="/notifications/" method="POST">
-      {% csrf_token %}
-      {{ form }}
-      <input type="submit" value="Submit">
-    </form>
+    <h2>{{user}}'s Notifications</h2>
+    <div id="database">
+      {% for item in data %}
+        <div>
+          {{item.terms}}
+          <input type="button" value="Remove" onclick="">
+        </div>
+      {% endfor %}
+    </div>
+    
+    <div id="new">
+      <a href="/notifications/new"><input type="button" value="Add a new notification"></a>
+    </div>
   </body>
 </html>
