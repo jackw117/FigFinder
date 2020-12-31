@@ -5,15 +5,24 @@
     <title>Updates</title>
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'notifications/style.css' %}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{% static 'notifications/functions.js' %}"></script>
 
   </head>
   <body>
     <h2>{{user}}'s Notifications</h2>
     <div id="database">
+      {% if not data %} 
+        <p>You currently don't have any notifications.</p>
+      {% endif %}
       {% for item in data %}
         <div>
-          {{item.terms}}
-          <input type="button" value="Remove" onclick="">
+          {{ item.0.terms }}
+          <form action="/notifications/", method="POST">
+            {% csrf_token %}
+            {{ item.1 }}
+            <input type="submit" value="Remove">
+          </form>
         </div>
       {% endfor %}
     </div>
