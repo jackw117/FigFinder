@@ -5,30 +5,36 @@
     <title>Updates</title>
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'notifications/style.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="{% static 'notifications/functions.js' %}"></script>
 
   </head>
   <body>
-    <h2>{{user}}'s Notifications</h2>
-    <div id="database">
+    
+    <div class="container" id="database">
+      <h2>{{user}}'s Notifications</h2>
       {% if not data %} 
         <p>You currently don't have any notifications.</p>
       {% endif %}
       {% for item in data %}
         <div>
-          {{ item.0.terms }}
-          <form action="/notifications/", method="POST">
+          <h3>{{ item.0.terms_en }}</h3>
+          <h3>{{ item.0.terms_jp }}</h3>
+          <ul>
+            {% for site in item.0.websites.all %}
+              <li>{{ site.name }}</li>
+            {% endfor %}
+          </ul>
+          
+          <form action="" method="POST">
             {% csrf_token %}
             {{ item.1 }}
-            <input type="submit" value="Remove">
+            <input class="btn btn-secondary" type="submit" value="Remove">
           </form>
         </div>
       {% endfor %}
-    </div>
-    
-    <div id="new">
-      <a href="/notifications/new"><input type="button" value="Add a new notification"></a>
+      <a href="new"><input class="btn btn-primary" type="button" value="Add a new notification"></a>
     </div>
   </body>
 </html>

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from .forms import SearchForm, RemoveForm
-from .models import Search    
+from .models import Search, Websites   
 
 def index(request):
     current_user = request.user
@@ -11,10 +11,14 @@ def index(request):
     if request.method == 'POST':
         form = RemoveForm(request.POST)
         if form.is_valid():
-            s = Search.objects.get(pk=form.cleaned_data['pk'])
-            if current_user.id == s.user_id:
-                s.delete()
-        return HttpResponseRedirect('/notifications/')
+            try:
+                s = Search.objects.get(pk=form.cleaned_data['pk'])
+                if current_user.id == s.user_id:
+                    s.delete()
+            except:
+                # User submit the form with an invalid key
+                pass
+        return HttpResponseRedirect('')
     else:
         data = []
         for i in range(len(current_objects)):
@@ -22,13 +26,17 @@ def index(request):
             data.append(tup)
         return render(request, 'notifications/index.html', {'data': data, 'user': current_user})
 
+# TODO: redirect to home after adding a notification
 def new_search(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            s = Search(terms=form.cleaned_data['terms'], user_id=request.user.id)
+            s = Search(terms_en=form.cleaned_data['terms_en'], terms_jp=form.cleaned_data['terms_jp'], user_id=request.user.id)
             s.save()
-        return HttpResponseRedirect('/notifications/')
+            for site in form.cleaned_data['websites']:
+                s.websites.add(site)            
+            s.save()
+        return HttpResponseRedirect('')
     else:
         form = SearchForm()
         return render(request, 'notifications/new.html', {'form': form})

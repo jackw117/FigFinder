@@ -5,10 +5,14 @@
     <title>Notifications</title>
   </head>
   <body>
-    <form action="/notifications/new" method="POST">
-      {% csrf_token %}
-      {{ form }}
-      <input type="submit" value="Submit">
-    </form>
+    {% if user.is_authenticated %}
+      <form action="new" method="POST">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit">
+      </form>
+    {% else %}
+      <h2>Please log in before adding a notification!</h2>
+    {% endif %}
   </body>
 </html>
