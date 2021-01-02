@@ -1,18 +1,17 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Notifications</title>
-  </head>
-  <body>
-    {% if user.is_authenticated %}
-      <form action="new" method="POST">
-        {% csrf_token %}
-        {{ form }}
-        <input type="submit" value="Submit">
-      </form>
-    {% else %}
-      <h2>Please log in before adding a notification!</h2>
-    {% endif %}
-  </body>
-</html>
+{% extends 'notifications/base.html' %}
+
+{% block title %}
+  <title>New</title>
+{% endblock %}
+
+{% block content %}
+  {% if user.is_authenticated %}
+    <form action="{% url 'index' %}" method="POST">
+      {% csrf_token %}
+      {{ form }}
+      <input type="submit" value="Submit">
+    </form>
+  {% else %}
+    <h2>Please log in before adding a notification!</h2>
+  {% endif %}
+{% endblock %}
