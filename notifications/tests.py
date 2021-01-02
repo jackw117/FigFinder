@@ -2,7 +2,7 @@ from django.test import RequestFactory, TestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from .models import Search
+from .models import Search, Websites
 from .forms import SearchForm, RemoveForm
 
 class NewUserViews(TestCase):
@@ -39,10 +39,6 @@ class SearchFormTests(TestCase):
         form = SearchForm()
         self.assertEqual(form.fields['terms_en'].label, "Search terms")
 
-    def test_search_form_too_small(self):
-        form = SearchForm({'terms_en': ''})
-        self.assertFalse(form.is_valid())
-
-    def test_search_form_too_large(self):
-        form = SearchForm({'terms_en': 'Three Rings for the Elven-kings under the sky, Seven for the Dwarf-lords in their halls of stone, Nine for Mortal Men doomed to die, One for the Dark Lord on his dark throne'})
+    def test_search_form_all_fields(self):
+        form = SearchForm({'terms_en': 'test'})
         self.assertFalse(form.is_valid())

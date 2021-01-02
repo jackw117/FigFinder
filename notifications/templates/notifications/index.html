@@ -6,27 +6,32 @@
 
 {% block content %}
   <div id="database">
-    <h2>{{user}}'s Notifications</h2>
-    {% if not data %} 
-      <p>You currently don't have any notifications.</p>
+    {% if user.is_authenticated %}
+      <h2>{{user}}'s Notifications</h2>
+      {% if not data %} 
+        <p>You currently don't have any notifications.</p>
+      {% endif %}
+      {% for item in data %}
+        <div>
+          <h3>{{ item.0.terms_en }}</h3>
+          <h3>{{ item.0.terms_jp }}</h3>
+          <ul>
+            {% for site in item.0.websites.all %}
+              <li>{{ site.name }}</li>
+            {% endfor %}
+          </ul>
+          
+          <form action="" method="POST">
+            {% csrf_token %}
+            {{ item.1 }}
+            <input class="btn btn-secondary" type="submit" value="Remove">
+          </form>
+        </div>
+      {% endfor %}
+      <a href="new"><input class="btn btn-primary" type="button" value="Add a new notification"></a>
+
+    {% else %}
+        <h2>Hello there</h2>
     {% endif %}
-    {% for item in data %}
-      <div>
-        <h3>{{ item.0.terms_en }}</h3>
-        <h3>{{ item.0.terms_jp }}</h3>
-        <ul>
-          {% for site in item.0.websites.all %}
-            <li>{{ site.name }}</li>
-          {% endfor %}
-        </ul>
-        
-        <form action="" method="POST">
-          {% csrf_token %}
-          {{ item.1 }}
-          <input class="btn btn-secondary" type="submit" value="Remove">
-        </form>
-      </div>
-    {% endfor %}
-    <a href="new"><input class="btn btn-primary" type="button" value="Add a new notification"></a>
   </div>
 {% endblock %}
