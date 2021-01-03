@@ -5,3 +5,4 @@ from django.core.validators import MaxValueValidator
 # TODO: custom user with search limits
 class User(AbstractUser):
     limit = models.IntegerField(validators=[MaxValueValidator(10)])
+    at_limit = models.BooleanField()

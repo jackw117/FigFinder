@@ -33,6 +33,9 @@ def index(request):
                 for site in formS.cleaned_data['websites']:
                     s.websites.add(site)            
                 s.save()
+                if (len(current_objects) == current_user.limit - 1):
+                    current_user.at_limit = True
+                    current_user.save()
             else:
                 # TODO: error, at limit
                 pass
