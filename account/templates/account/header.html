@@ -1,3 +1,16 @@
 <div class="header">
     <a href="{% url 'index' %}">Home</a>
+    
+    <div class="account">
+        {% if not user.is_authenticated %}
+        <form action="{% url 'login' %}">
+            <input class="btn btn-primary" type="submit" value="Login">
+        </form>
+    
+        {% else %}
+        <form action="{% url 'logout' %}">
+            <input class="btn btn-primary" type="submit" value="Logout">
+        </form>
+        {% endif %}
+    </div>
 </div>
