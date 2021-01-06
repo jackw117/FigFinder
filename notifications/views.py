@@ -20,6 +20,8 @@ def index(request):
             try:
                 s = Search.objects.get(pk=formR.cleaned_data['pk'])
                 if current_user.id == s.user.pk:
+                    current_user.at_limit = False
+                    current_user.save()
                     s.delete()
             except:
                 # User edited the HTML to submit the form with an invalid key
@@ -33,9 +35,6 @@ def index(request):
                 for site in formS.cleaned_data['websites']:
                     s.websites.add(site)            
                 s.save()
-                if (len(current_objects) == current_user.limit - 1):
-                    current_user.at_limit = True
-                    current_user.save()
             else:
                 # TODO: error, at limit
                 pass
@@ -52,4 +51,5 @@ def index(request):
 # page for adding a new Search object
 def new_search(request):
     form = SearchForm()
-    return render(request, 'notifications/new.html', {'form': form})
+    count = Search.objects.filter(user=request.user.id).count()
+    return render(request, 'notifications/new.html', {'form': form, 'count': count})

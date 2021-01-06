@@ -6,7 +6,7 @@
 
 {% block content %}
   {% if user.is_authenticated %}
-    {% if not user.at_limit %}
+    {% if not count == user.limit %}
       <form action="{% url 'index' %}" method="POST">
         {% csrf_token %}
         <table>
