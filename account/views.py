@@ -17,6 +17,10 @@ def register(request):
     
     # GET request, creates a blank form for a user to create an account
     else:
-        form = RegistrationForm()
+        # redirects to the main page if a user is already logged in
+        if request.user.is_authenticated:
+            return redirect('index')
+        else:
+            form = RegistrationForm()
 
     return render(request, 'registration/register.html', {'form': form})    

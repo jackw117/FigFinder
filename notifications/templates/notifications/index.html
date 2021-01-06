@@ -8,7 +8,6 @@
   <div id="database">
     {% if user.is_authenticated %}
       <h2>{{ user }}'s Notifications</h2>
-
       {% if not data %} 
         <p>You currently don't have any notifications.</p>
       {% endif %}

@@ -20,8 +20,6 @@ def index(request):
             try:
                 s = Search.objects.get(pk=formR.cleaned_data['pk'])
                 if current_user.id == s.user.pk:
-                    current_user.at_limit = False
-                    current_user.save()
                     s.delete()
             except:
                 # User edited the HTML to submit the form with an invalid key

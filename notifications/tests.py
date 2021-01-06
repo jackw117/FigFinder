@@ -7,7 +7,7 @@ from .forms import SearchForm, RemoveForm
 
 from account.models import User
 
-# Used to create a user with the given limit, and a number of search objects equal to the current limit minus the offset
+# Creates a user with the given limit, and a number of search objects equal to the current limit minus the offset
 def set_up_one_user(self, limit, offset):
     self.user = User.objects.create_user(username='test', email='test@testing.com', password='2HJ1vRV0Z&3iD', limit=limit)
     self.website = Websites.objects.create(url="https://www.google.com", name="Google")
