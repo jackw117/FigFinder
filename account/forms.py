@@ -5,7 +5,6 @@ from captcha.fields import ReCaptchaField
 from .models import User
 
 
-# display name, email
 class RegistrationForm(UserCreationForm):
 
     class Meta:
@@ -16,3 +15,6 @@ class RegistrationForm(UserCreationForm):
         }
 
     captcha = ReCaptchaField()
+
+class GroupForm(forms.Form):
+    group = forms.ChoiceField(choices=User.GROUP_CHOICES)

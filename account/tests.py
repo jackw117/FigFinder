@@ -4,11 +4,11 @@ from django.contrib import auth
 from django.contrib.auth import login
 
 from .models import User
-from .forms import RegistrationForm
+from .forms import RegistrationForm, GroupForm
 
 # creates a user object
 def create_user():
-    User.objects.create(username="test", email='test@testing.com', password='2HJ1vRV0Z&3iD', limit=10)
+    User.objects.create_user(username="test", email='test@testing.com', password='2HJ1vRV0Z&3iD', limit=10)
 
 class UserModelTests(TestCase):
     def test_limit_field(self):
@@ -116,3 +116,45 @@ class RegistrationViewTests(TestCase):
         The user will be registered and logged in.
         """
         pass
+
+# TODO: redirection testing
+class SettingsViewTests(TestCase):
+    def test_view_url_exists(self):
+        """
+        Testing that the settings page exists and the proper template is used.
+        """
+        response = self.client.get('/settings')
+        response2 = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        self.assertTemplateUsed(response2, 'account/settings.html')
+
+    def test_view_existing_user(self):
+        """
+        A user will be displayed account settings forms if they are logged in.
+        """
+        create_user()
+        login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
+        response = self.client.get(reverse('settings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, response.context['group'])
+    
+    def test_view_new_user(self):
+        """
+        A new user will be redirected to the login page.
+        """
+        pass
+
+    def test_group_post(self):
+        """
+        A user's limit is changed upon changing their group.
+        """
+        create_user()
+        limit = User.objects.get(pk=1).limit
+        login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
+        response = self.client.post('/settings', {'group': User.GROUP_CHOICES[1][0]})
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+        self.assertEqual(limit, 10)
+        self.assertEqual(User.objects.get(pk=1).limit, 2)
+    

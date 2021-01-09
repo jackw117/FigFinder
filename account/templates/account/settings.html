@@ -1,0 +1,19 @@
+{% extends 'account/base.html' %}
+
+{% block title %}
+    <title>Settings</title>
+{% endblock %}
+
+{% block content %}
+    {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'settings' %}">
+            {% csrf_token %}
+            <table>
+                {{ group.as_table }}
+            </table>
+            <input type="submit" value="Change group" />
+        </form>
+    {% else %}
+        <h2>Please log in first.</h2>
+    {% endif %}
+{% endblock %}

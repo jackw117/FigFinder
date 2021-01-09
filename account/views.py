@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.http import HttpResponseRedirect
 
-from .forms import RegistrationForm
+from .forms import RegistrationForm, GroupForm
 
 def register(request):
     # POST request, creates a new user from the form and logs in
@@ -23,4 +23,17 @@ def register(request):
         else:
             form = RegistrationForm()
 
-    return render(request, 'registration/register.html', {'form': form})    
+    return render(request, 'registration/register.html', {'form': form})
+
+def settings(request):
+    if request.method == 'POST':
+        group = GroupForm(request.POST)
+        if group.is_valid() and request.user.is_authenticated:
+            request.user.limit = group.cleaned_data.get('group')
+            request.user.save()
+            return redirect('index')
+
+    else:
+        group = GroupForm()
+
+    return render(request, 'account/settings.html', {'group': group})

@@ -8,6 +8,7 @@
         </form>
     
         {% else %}
+        <a href="{% url 'settings' %}">Settings</a>
         <form action="{% url 'logout' %}">
             <input class="btn btn-primary" type="submit" value="Logout">
         </form>
