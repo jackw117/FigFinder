@@ -9,35 +9,53 @@
     {% if user.is_authenticated %}
       <h2>{{ user }}'s Notifications</h2>
       {% if not data %} 
-        <p>You currently don't have any notifications.</p>
+        <p id="noData">You currently don't have any notifications.</p>
       {% endif %}
       
       {% for item in data %}
-        <div>
-          <h3>{{ item.0.terms_en }}</h3>
-          <ul>
-            {% for site in item.0.websites.all %}
-              <li>{{ site.name }}</li>
-            {% endfor %}
-          </ul>
-          
-          <form action="" method="POST">
-            {% csrf_token %}
-            {{ item.1 }}
-            <input class="btn btn-secondary" type="submit" value="Remove">
-          </form>
-        </div>
+        {% include 'notifications/new.html' %}
       {% endfor %}
-
-      {% if data|length < user.limit %}
-        <a href="new"><input class="btn btn-primary" type="button" value="Add a new notification"></a>
-
-      {% else %}
-        <input class="btn btn-primary" type="button" value="Add a new notification" disabled>
-      {% endif %}
       
     {% else %}
-        <h2>Hello there</h2>
+      <h2>Hello there</h2>
     {% endif %}
   </div>
+
+  <div id="limitDiv">
+    <span id="limitSpan">{{user.limit}}</span>
+  </div>
+
+  {% if data|length < user.limit %}
+  <!-- Trigger the modal with a button -->
+  <button id="modalButton" type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">Add new notification</button>
+
+  <!-- Modal -->
+  <div id="myModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">New Notification</h4>
+        </div>
+        <div class="modal-body">
+          <form id="new-search" action="{% url 'index' %}" method="POST">
+            {% csrf_token %}
+            <table>
+              {{ form.as_table }}
+            </table>
+            <p id="errors"></p>
+            <input type="submit" value="Submit">
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button id="modalClose" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <button type="button" class="btn btn-info" disabled>Add new notification</button>
+  {% endif %}
 {% endblock %}

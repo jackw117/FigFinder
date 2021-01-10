@@ -8,7 +8,7 @@ class SearchForm(forms.Form):
     terms_en = forms.CharField(label='Search terms', max_length=50, min_length=5)
     websites = forms.ModelMultipleChoiceField(
         queryset=Websites.objects.all(),
-        widget=forms.CheckboxSelectMultiple
+        widget=forms.CheckboxSelectMultiple,
     )
 
 class RemoveForm(forms.Form):

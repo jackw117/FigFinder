@@ -33,21 +33,20 @@ def index(request):
                 for site in formS.cleaned_data['websites']:
                     s.websites.add(site)            
                 s.save()
+                tup = (s, RemoveForm(initial={'pk': s.pk}))
+                return render(request, 'notifications/new.html', {'item': tup})
             else:
                 # TODO: error, at limit
-                pass
+                return render(request, 'notifications/new.html')
+        else:
+            return render(request, 'notifications/new.html')
         return HttpResponseRedirect('')
 
     # GET request, display all searches for a current user on the page
     else:
         data = []
+        new_form = SearchForm()
         for i in range(len(current_objects)):
             tup = (current_objects[i], RemoveForm(initial={'pk': current_objects[i].pk}))
             data.append(tup)
-        return render(request, 'notifications/index.html', {'data': data, 'user': current_user})
-
-# page for adding a new Search object
-def new_search(request):
-    form = SearchForm()
-    count = Search.objects.filter(user=request.user.id).count()
-    return render(request, 'notifications/new.html', {'form': form, 'count': count})
+        return render(request, 'notifications/index.html', {'data': data, 'user': current_user, 'form': new_form})

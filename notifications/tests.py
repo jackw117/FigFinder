@@ -104,7 +104,7 @@ class IndexViewTest(TestCase):
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '<input class="btn btn-primary" type="button" value="Add a new notification" disabled>')
+        self.assertContains(response, '<button type="button" class="btn btn-info" disabled>Add new notification</button>')
 
     def test_view_displays_all(self):
         """
@@ -125,47 +125,6 @@ class IndexViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['data']), 0)
         self.assertContains(response, '<h2>Hello there</h2>')
-
-class NewViewTest(TestCase):
-    def test_view_url_exists(self):
-        """
-        Testing that the new page exists and the proper template is used.
-        """
-        response = self.client.get('/new')
-        response2 = self.client.get(reverse('new'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response2.status_code, 200)
-        self.assertTemplateUsed(response2, 'notifications/new.html')        
-
-    def test_view_new_user(self):
-        """
-        A user should not have a form to add a notification if they have not logged in.
-        """
-        response = self.client.get(reverse('new'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '<h2>Please log in before adding a notification!</h2>')
-        self.assertNotContains(response, response.context['form'])
-
-    def test_view_existing_user(self):
-        """
-        A user should have a form to add a notification if they have logged in and are not at their limit.
-        """
-        set_up_one_user(self, 10, 1)
-        login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
-        response = self.client.get(reverse('new'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, response.context['form'])
-
-    def test_view_existing_user_at_limit(self):
-        """
-        A user should not have a form to add a notification if they have logged in and are at their limit.
-        """
-        set_up_one_user(self, 10, 0)
-        login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
-        response = self.client.get(reverse('new'))
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, response.context['form'])
-        self.assertContains(response, '<h2>You are at your limit. Please remove some notifications before adding new ones.</h2>')
 
 class IndexPostTest(TestCase):
     def test_remove_form(self):
@@ -206,7 +165,7 @@ class IndexPostTest(TestCase):
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.post(reverse('index'), {'terms_en': 'Test Search', 'websites': [1]})
         s = Search.objects.filter(terms_en="Test Search")
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(len(s), 1)
 
     def test_search_form_limit(self):
@@ -217,5 +176,7 @@ class IndexPostTest(TestCase):
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.post(reverse('index'), {'terms_en': 'Test Search', 'websites': [1]})
         s = Search.objects.filter(terms_en="Test Search")
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(len(s), 0)
+
+# TODO: test ajax add/remove

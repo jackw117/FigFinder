@@ -1,25 +1,18 @@
-{% extends 'notifications/base.html' %}
-
-{% block title %}
-  <title>New</title>
-{% endblock %}
-
-{% block content %}
-  {% if user.is_authenticated %}
-    {% if count < user.limit %}
-      <form action="{% url 'index' %}" method="POST">
-        {% csrf_token %}
-        <table>
-          {{ form.as_table }}
-        </table>
+{% if item %}
+    <div class="item">
+        <h3>{{ item.0.terms_en }}</h3>
+        <ul>
+        {% for site in item.0.websites.all %}
+            <li>{{ site.name }}</li>
+        {% endfor %}
+        </ul>
         
-        <input type="submit" value="Submit">
-      </form>
-    {% else %}
-      <h2>You are at your limit. Please remove some notifications before adding new ones.</h2>
-    {% endif %}
-    
-  {% else %}
-    <h2>Please log in before adding a notification!</h2>
-  {% endif %}
-{% endblock %}
+        <form class="removeForm" action="" method="POST">
+            {% csrf_token %}
+            {{ item.1 }}
+            <input class="btn btn-secondary" type="submit" value="Remove">
+        </form>
+    </div>
+{% else %}
+    <h2>Something went wrong!</h2>
+{% endif %}
