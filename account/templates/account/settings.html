@@ -6,13 +6,15 @@
 
 {% block content %}
     {% if user.is_authenticated %}
-        <form method="POST" action="{% url 'settings' %}">
+        <form id="groupForm" method="POST" action="{% url 'settings' %}">
             {% csrf_token %}
             <table>
                 {{ group.as_table }}
             </table>
             <input type="submit" value="Change group" />
         </form>
+
+        <a href="{% url 'change-password' %}">Change password</a>
     {% else %}
         <h2>Please log in first.</h2>
     {% endif %}

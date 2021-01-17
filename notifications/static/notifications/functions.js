@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    var frm = $('#new-search');
+    var frm = $('#newSearch');
     frm.submit(function () {
         $.ajax({
             type: frm.attr('method'),
@@ -9,6 +9,7 @@ $(document).ready(function() {
                 $("#database").append(data);
                 $("#modalClose").click();
                 $("#noData").remove();
+                $('#newSearch')[0].reset();
                 checkLimit();
             },
             error: function(data) {

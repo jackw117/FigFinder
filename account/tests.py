@@ -25,7 +25,7 @@ class LoginViewTests(TestCase):
         """
         Testing that the login page exists and the proper template is used.
         """
-        response = self.client.get('/login/')
+        response = self.client.get('/login')
         response2 = self.client.get(reverse('login'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response2.status_code, 200)
@@ -62,7 +62,7 @@ class LogoutViewTests(TestCase):
         """
         Testing that the login page exists and the proper template is used.
         """
-        response = self.client.get('/logout/')
+        response = self.client.get('/logout')
         response2 = self.client.get(reverse('logout'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response2.status_code, 200)
@@ -106,16 +106,21 @@ class RegistrationViewTests(TestCase):
         """
         A user will be redirected to the main page if they are already logged in.
         """
-        # login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
-        # response = self.client.get('/register', follow=True)
-        # self.assertEqual(response.redirect_chain, 0)
-        pass
+        create_user()
+        login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
+        response = self.client.get(reverse('register'))
+        self.assertRedirects(response, '/')
 
     def test_register_post(self):
         """
         The user will be registered and logged in.
         """
-        pass
+        response = self.client.post(reverse('register'), {'username': 'test', 'email': 'test@test.com', 'password1': '2HJ1vRV0Z&3iD', 'password2': '2HJ1vRV0Z&3iD', 'g-recaptcha-response': 'PASSED'})
+        self.assertRedirects(response, '/')
+        self.client.login(username="test", password="2HJ1vRV0Z&3iD")
+        user = auth.get_user(self.client)
+        self.assertEqual(user.id, 1)
+
 
 # TODO: redirection testing
 class SettingsViewTests(TestCase):
@@ -123,6 +128,8 @@ class SettingsViewTests(TestCase):
         """
         Testing that the settings page exists and the proper template is used.
         """
+        create_user()
+        login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
         response = self.client.get('/settings')
         response2 = self.client.get(reverse('settings'))
         self.assertEqual(response.status_code, 200)
@@ -143,7 +150,8 @@ class SettingsViewTests(TestCase):
         """
         A new user will be redirected to the login page.
         """
-        pass
+        response = self.client.get(reverse('settings'))
+        self.assertRedirects(response, '/')
 
     def test_group_post(self):
         """
@@ -157,4 +165,37 @@ class SettingsViewTests(TestCase):
         self.assertTrue(user.is_authenticated)
         self.assertEqual(limit, 10)
         self.assertEqual(User.objects.get(pk=1).limit, 2)
+
+class ChangePasswordTests(TestCase):
+    def test_view_url_exists(self):
+        """
+        Testing that the change password page exists and the proper template is used.
+        """
+        create_user()
+        login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
+        response = self.client.get('/change-password')
+        response2 = self.client.get(reverse('change-password'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response2.status_code, 200)
+        self.assertTemplateUsed(response2, 'registration/password_change.html')
+
+    def test_view_new_user(self):
+        """
+        A new user will be redirected to the login page.
+        """
+        response = self.client.get(reverse('change-password'))
+        self.assertRedirects(response, '/')
     
+    def test_password_change(self):
+        """
+        Test that a user can successfully change their password.
+        """
+        create_user()
+        login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
+        user = auth.get_user(self.client)
+        response = self.client.post(reverse('change-password'), {'old_password': '2HJ1vRV0Z&3iD', 'new_password1': '2HJ1vRV0Z&3iD12', 'new_password2': '2HJ1vRV0Z&3iD12'})
+        self.assertRedirects(response, '/')
+        logout = self.client.logout()
+        login2 = self.client.login(username="test", password="2HJ1vRV0Z&3iD12")
+        user2 = auth.get_user(self.client)
+        self.assertEqual(user.id, user2.id)
