@@ -16,7 +16,7 @@ class UserModelTests(TestCase):
         A user has three groups it can be in with a default of 10.
         """
         create_user()
-        user = User.objects.get(pk=1)
+        user = User.objects.get(username="test")
         self.assertEqual(len(user._meta.get_field('limit').choices), 3)
         self.assertEqual(user._meta.get_field('limit').default, 10)
 
@@ -119,10 +119,9 @@ class RegistrationViewTests(TestCase):
         self.assertRedirects(response, '/')
         self.client.login(username="test", password="2HJ1vRV0Z&3iD")
         user = auth.get_user(self.client)
-        self.assertEqual(user.id, 1)
+        self.assertEqual(user.id, User.objects.get(username="test").pk)
 
 
-# TODO: redirection testing
 class SettingsViewTests(TestCase):
     def test_view_url_exists(self):
         """
@@ -158,13 +157,13 @@ class SettingsViewTests(TestCase):
         A user's limit is changed upon changing their group.
         """
         create_user()
-        limit = User.objects.get(pk=1).limit
+        limit = User.objects.get(username="test").limit
         login = self.client.login(username="test", password="2HJ1vRV0Z&3iD")
         response = self.client.post('/settings', {'group': User.GROUP_CHOICES[1][0]})
         user = auth.get_user(self.client)
         self.assertTrue(user.is_authenticated)
         self.assertEqual(limit, 10)
-        self.assertEqual(User.objects.get(pk=1).limit, 2)
+        self.assertEqual(User.objects.get(username="test").limit, 2)
 
 class ChangePasswordTests(TestCase):
     def test_view_url_exists(self):

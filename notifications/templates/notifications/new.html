@@ -12,6 +12,7 @@
             {{ item.1 }}
             <input class="btn btn-secondary" type="submit" value="Remove">
         </form>
+        <a href="{% url 'details' item.0.pk %}">details</a>
     </div>
 {% else %}
     <h2>Something went wrong!</h2>

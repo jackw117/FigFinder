@@ -1,0 +1,37 @@
+{% extends 'notifications/base.html' %}
+
+{% block title %}
+  <title>Details</title>
+{% endblock %}
+
+{% block content %}
+  {% if search %}
+
+    <div id="websiteData">
+      <h3>Websites</h3>
+      <ul>
+        {% for item in search.websites.all %}
+        <li>
+          <a id="itemUrl" href="{{item.url}}{{search.terms_en}}{{url_right}}">{{item.url}}{{search.terms_en}}{{url_right}}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    
+
+    <div id="detailsData">
+      <h3>Details</h3>
+      <ul>
+        {% for item in search.details %}
+          <li>
+            <a href="{{item}}">{{item}}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    
+  {% else %}
+    <h2>That page does not exist</h2>
+  {% endif %}
+  
+{% endblock %}

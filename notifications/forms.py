@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from .models import Websites, Search
 
 class SearchForm(forms.Form):
-    terms_en = forms.CharField(label='Search terms', max_length=50, min_length=5)
+    terms_en = forms.CharField(label='Search terms', max_length=50, min_length=1)
     websites = forms.ModelMultipleChoiceField(
         queryset=Websites.objects.all(),
         widget=forms.CheckboxSelectMultiple,
