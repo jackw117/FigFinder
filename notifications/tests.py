@@ -1,8 +1,9 @@
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.contrib.auth import authenticate, login
+from datetime import datetime, timezone
 
-from .models import Search, Websites
+from .models import Search, Websites, Details, Entry
 from .forms import SearchForm, RemoveForm
 
 from account.models import User
@@ -10,7 +11,7 @@ from account.models import User
 # Creates a user with the given limit, and a number of search objects equal to the current limit minus the offset
 def set_up_one_user(self, limit, offset):
     self.user = User.objects.create_user(username='test', email='test@testing.com', password='2HJ1vRV0Z&3iD', limit=limit)
-    self.website = Websites.objects.create(url="https://www.google.com", name="Google")
+    self.website = Websites.objects.create(url="https://www.google.com", name="Google", base_url="https://www.google.com", className="test")
 
     for sid in range(limit - offset):
         search = Search.objects.create(terms_en=f"test{sid}", user=self.user)
@@ -37,25 +38,23 @@ class SearchModelTests(TestCase):
         expected = self.search.terms_en
         self.assertEqual(expected, str(self.search))
 
-    def test_search_details(self):
-        """
-        A search object has a details ArrayField with a max length of 150 for a single element in the field, and can be made null and blank.
-        """
-        details = self.search._meta.get_field('details')
-        self.assertEqual(details.base_field.max_length, 150)
-        self.assertEqual(details.null, True)
-        self.assertEqual(details.blank, True)
-
 class WebsitesModelTests(TestCase):
     # creates a single website in the database
     def setUp(self):
-        self.website = Websites.objects.create(url="https://www.google.com", name="Google")
+        set_up_one_user(self, 1, 0)
     
     def test_websites_name_max_length(self):
         """
         A website object has a 'name' field with a max_length of 25
         """
         max_length = self.website._meta.get_field('name').max_length
+        self.assertEqual(max_length, 25)
+
+    def test_websites_name_max_length(self):
+        """
+        A website object has a 'className' field with a max_length of 25
+        """
+        max_length = self.website._meta.get_field('className').max_length
         self.assertEqual(max_length, 25)
 
     def test_websites_str(self):
@@ -73,6 +72,28 @@ class WebsitesModelTests(TestCase):
         self.assertEqual(field.max_length, 100)
         self.assertEqual(field.null, True)
         self.assertEqual(field.blank, True)
+
+class EntryModelTests(TestCase):
+    def setUp(self):
+        self.entry = Entry.objects.create(name="test", url="https://www.google.com")
+    
+    def test_entry_fields(self):
+        max_length = self.entry._meta.get_field('name').max_length
+        new = self.entry.new
+        self.assertEqual(max_length, 150)
+        self.assertEqual(new, False)
+
+class DetailsModelTests(TestCase):
+    def setUp(self):
+        set_up_one_user(self, 1, 0)
+        self.search = Search.objects.get(terms_en="test0")
+        self.details = Details.objects.get(search=self.search)
+
+    def test_details_time(self):
+        """
+        A Details object has a time field that defaults to the time it was created.
+        """
+        self.assertLess(self.details.time, datetime.now(timezone.utc))
 
 class RemoveFormTests(TestCase):
     def test_remove_form_negative_pk(self):
@@ -115,7 +136,7 @@ class IndexViewTest(TestCase):
         """
         A user is blocked on the index page from adding more test cases if they are at the limit.
         """
-        set_up_one_user(self, 10, 0)
+        set_up_one_user(self, 1, 0)
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
@@ -125,12 +146,12 @@ class IndexViewTest(TestCase):
         """
         All of a user's notifications should be displayed back at the index page.
         """
-        set_up_one_user(self, 10, 0)
+        set_up_one_user(self, 1, 0)
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(str(response.context['user']), 'test')
-        self.assertEqual(len(response.context['data']), 10)
+        self.assertEqual(len(response.context['data']), 1)
 
     def test_view_new_user(self):
         """
@@ -146,9 +167,9 @@ class IndexPostTest(TestCase):
         """
         A user can submit a remove form to remove one of their notifications.
         """
-        set_up_one_user(self, 10, 0)
+        set_up_one_user(self, 1, 0)
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
-        s1 = Search.objects.get(terms_en="test1")
+        s1 = Search.objects.get(terms_en="test0")
         self.assertEqual(s1.user, self.user)
         response = self.client.post(reverse('index'), {'pk': s1.pk})
         s2 = Search.objects.filter(terms_en="test1")
@@ -159,7 +180,7 @@ class IndexPostTest(TestCase):
         """
         A user cannot submit a remove form to remove a search object that belongs to another user.
         """
-        set_up_one_user(self, 10, 0)
+        set_up_one_user(self, 1, 0)
         user2 = User.objects.create(username='test2', email='test2@testing.com', password='2HJ1vRV0Z&3iD', limit=10)
         search = Search.objects.create(terms_en="test search", user=user2)
         search.websites.add(self.website)
@@ -176,10 +197,9 @@ class IndexPostTest(TestCase):
         """
         A user can submit a search form to add a new notification to the database.
         """
-        set_up_one_user(self, 10, 1)
+        set_up_one_user(self, 1, 1)
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
-        website = Websites.objects.get(name="Google")
-        response = self.client.post(reverse('index'), {'terms_en': 'Test Search', 'websites': [website.pk]})
+        response = self.client.post(reverse('index'), {'terms_en': 'Test Search', 'websites': [self.website.pk]})
         s = Search.objects.filter(terms_en="Test Search")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(s), 1)
@@ -188,19 +208,19 @@ class IndexPostTest(TestCase):
         """
         A user cannot submit a search form to add a new notification to the database if they are currently at their limit.
         """
-        set_up_one_user(self, 10, 0)
+        set_up_one_user(self, 1, 0)
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.post(reverse('index'), {'terms_en': 'Test Search', 'websites': [0]})
         s = Search.objects.filter(terms_en="Test Search")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(s), 0)
 
-# TODO: test ajax add/remove, getDetails
+# TODO: test ajax add/remove, getDetails (use search form to test getDetails)
 
 class DetailsViewTest(TestCase):
     def setUp(self):
-        set_up_one_user(self, 10, 0)
-        self.s = Search.objects.get(terms_en="test1")
+        set_up_one_user(self, 1, 0)
+        self.s = Search.objects.get(terms_en="test0")
 
     def test_view_url_exists(self):
         """
@@ -216,10 +236,11 @@ class DetailsViewTest(TestCase):
         """
         A user will be displayed details associated with one of their search objects.
         """
+        details = Details.objects.get(search=self.s)
         login = self.client.login(username='test', password='2HJ1vRV0Z&3iD')
         response = self.client.get(reverse('details', args=(self.s.id,)))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['search'], self.s)
+        self.assertEqual(response.context['details'][0], details)
 
     def test_view_bad_search(self):
         """
@@ -227,4 +248,4 @@ class DetailsViewTest(TestCase):
         """
         response = self.client.get(reverse('details', args=(self.s.id,)))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['search']), 0)
+        self.assertEqual(len(response.context['details']), 0)

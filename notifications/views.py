@@ -2,15 +2,16 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from bs4 import BeautifulSoup
 import urllib3
+from datetime import datetime, timezone
 
 from .forms import SearchForm, RemoveForm
-from .models import Search, Websites
+from .models import Search, Websites, Details, Entry
 from account.models import User
 
 # main page for Search objects where all searches for the current user are displayed
 def index(request):
     current_user = request.user
-    current_objects = Search.objects.filter(user=current_user.id)
+    current_objects = Search.objects.filter(user=current_user) if not current_user.is_anonymous else []
     
     # POST request, receive either a remove form or a search form
     if request.method == 'POST':
@@ -21,7 +22,7 @@ def index(request):
         if formR.is_valid():
             try:
                 s = Search.objects.get(pk=formR.cleaned_data['pk'])
-                if current_user.id == s.user.pk:
+                if current_user == s.user:
                     s.delete()
             except:
                 # User edited the HTML to submit the form with an invalid key
@@ -30,24 +31,14 @@ def index(request):
         # search form is valid, so add the given object to the database
         elif formS.is_valid():
             if (len(current_objects) < current_user.limit):
-                details = []
                 terms = formS.cleaned_data['terms_en']
+                s = Search.objects.create(terms_en=terms, user=current_user)
                 for site in formS.cleaned_data['websites']:
-                    if site.name == "Mandarake":
-                        srcs = getDetails(site, terms, "pic")
-                        for src in srcs:
-                            details.append(src)
-                    elif site.name == "Surugaya":
-                        srcs = getDetails(site, terms, "item_detail")
-                        for src in srcs:
-                            details.append(src)
-
-                s = Search(terms_en=terms, user=current_user, details=details)
-                s.save()
-                for site in formS.cleaned_data['websites']:
-                    s.websites.add(site)
-                s.save()
-
+                    details = getDetails(site, terms, None)
+                    d = Details.objects.create(search=s, website=site)
+                    for entry in details:
+                        d.details.add(entry)
+                        d.save()
                 tup = (s, RemoveForm(initial={'pk': s.pk}))
                 return render(request, 'notifications/new.html', {'item': tup})
             else:
@@ -67,34 +58,45 @@ def index(request):
         return render(request, 'notifications/index.html', {'data': data, 'user': current_user, 'form': new_form})
 
 def details(request, pk):
-    try:
-        s = Search.objects.get(pk=pk)
-        if s.user == request.user:
-            return render(request, 'notifications/details.html', {'search': s})
-        # else:
-        #     return HttpResponseRedirect('')
-    except:
-        # invalid pk
-        pass
-    return render(request, 'notifications/details.html', {'search': []})
+    d = Details.objects.filter(search__pk=pk, search__user=request.user) if not request.user.is_anonymous else []
+    if d:
+        newDetails = []
+        for item in d:
+            diff = datetime.now(timezone.utc) - item.time
+            if diff.total_seconds() >= 1 * 60:
+                entries = getDetails(item.website, item.search.terms_en, item.details)
+                item.details.clear()
+                for e in entries:
+                     item.details.add(e)
+                item.time = datetime.now(tz=timezone.utc)
+                item.save()
+            newDetails.append(item)
+        return render(request, 'notifications/details.html', {'details': newDetails})
+    else:
+        return render(request, 'notifications/details.html', {'details': []})
 
-# TODO: fix adult confirm
+# TODO: fix adult confirm, fix breaking on space in item, check that updating new field works
+def getDetails(site, item, details):
+    className = ""
+    if site.name != "Mandarake" and site.name != "Surugaya":
+        return []        
 
-def getDetails(site, item, className):
     http = urllib3.PoolManager()
     right = site.url_right if site.url_right else ""
     sock = http.request('GET', site.url + item + right)
-    soup = BeautifulSoup(sock.data)
-    divs = soup.find_all("div", class_=className)
+    soup = BeautifulSoup(sock.data, features='html.parser')
+    divs = soup.find_all("div", class_=site.className)
     links = []
     for div in divs:
-        links.extend(div.find_all("a"))
-    hrefs = []
+        links.append(div.find("a"))
+    entries = []
     for link in links:
-        if site.base_url in link["href"]:
-            hrefs.append(link["href"])
-        else:
-            hrefs.append(site.base_url + link["href"])
+        url = link["href"]
+        if not site.base_url in link["href"]:
+            url = site.base_url + url
+        e = Entry.objects.get_or_create(name=link.text, url=url)
+        e[0].new = e[1]
+        e[0].save()
+        entries.append(e[0])
     sock.close()
-    return hrefs
-# TODO: new model for details, add parser to soup
+    return entries
